@@ -42,7 +42,11 @@ byte_picker = (title, id, notifier) ->
 
 update_instruments = ->
   labels = for idx, inst in ipairs renoise.song().instruments
-    "#{idx}: #{inst.name}"
+    name = inst.name
+    if name == ""
+      name = inst.midi_output_properties.device_name
+
+    "#{idx}: #{name}"
 
   vb.views.instrument_picker.items = labels
 
