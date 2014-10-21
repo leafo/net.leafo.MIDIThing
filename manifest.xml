@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RenoiseScriptingTool>
+  <ApiVersion>4.0</ApiVersion>
+  <Version>1.0</Version>
+  <Id>net.leafo.MIDIThing</Id>
+  <Author>leafo [leafot@gmail.com]</Author>
+
+  <Category>MIDI</Category>
+  <Name>MIDI Thing</Name>
+
+  <Description>Control MIDI modules</Description>
+
+  <Homepage>https://github.com/leafo/net.leafo.MIDIThing</Homepage>
+</RenoiseScriptingTool>
