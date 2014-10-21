@@ -1,8 +1,8 @@
 
 vb = renoise.ViewBuilder!
 
-byte_picker = (id, notifier) ->
-  vb\valuebox {
+byte_picker = (title, id, notifier) ->
+  picker = vb\valuebox {
     :id, :notifier
     min: 0
     max: 128
@@ -17,6 +17,28 @@ byte_picker = (id, notifier) ->
       tonumber(str) or 0
 
   }
+
+  vb\column {
+    spacing: 1
+    vb\text text: title
+
+    picker
+
+    vb\button {
+      text: "Up"
+      width: "100%"
+      notifier: ->
+        picker.value = math.min 128, math.max 0, picker.value + 1
+    }
+
+    vb\button {
+      text: "Down"
+      width: "100%"
+      notifier: ->
+        picker.value = math.min 128, math.max 0, picker.value - 1
+    }
+  }
+
 
 update_instruments = ->
   labels = for idx, inst in ipairs renoise.song().instruments
@@ -72,39 +94,30 @@ instrument_picker = vb\column {
 
 
 midi_pickers = vb\row {
-  spacing: 10
+  spacing: 20
 
-  vb\column {
-    vb\text text: "Bank MSB"
-    byte_picker "bank_msb", refresh_instrument
-  }
-  
-  vb\column {
-    vb\text text: "Bank LSB"
-    byte_picker "bank_lsb", refresh_instrument
-  }
-  
-  vb\column {
-    vb\text text: "Program"
-    byte_picker "program_no", refresh_instrument
+  byte_picker "Bank MSB", "bank_msb", refresh_instrument
+  byte_picker "Bank LSB", "bank_lsb", refresh_instrument
+  byte_picker "Program", "program_no", refresh_instrument
+}
+
+ins_loader = vb\horizontal_aligner {
+  mode: "center"
+  vb\button {
+    text: "Load .ins file"
+    notifier: ->
+      fname = renoise.app!\prompt_for_filename_to_read {"ins"}, "Choose .ins file"
+      renoise.app!\show_prompt "TODO", "read #{fname}", {"OK"}
   }
 }
 
 content = vb\column {
-  margin: 10
-  spacing: 10
+  margin: 15
+  spacing: 15
 
   instrument_picker
   midi_pickers
-  vb\horizontal_aligner {
-    mode: "center"
-    vb\button {
-      text: "Load .ins file"
-      notifier: ->
-        fname = renoise.app!\prompt_for_filename_to_read {"ins"}, "Choose .ins file"
-        renoise.app!\show_prompt "TODO", "read #{fname}", {"OK"}
-    }
-  }
+  -- ins_loader
 }
 
 renoise.app()\show_custom_dialog "MIDI Thing", content
