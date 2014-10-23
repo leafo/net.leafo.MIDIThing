@@ -42,10 +42,12 @@ class UserInterface
     print "Copying from instrument"
 
     midi = @current_instrument.midi_output_properties
-    bank = midi.bank
+    bank = midi.bank - 1
 
-    msb = math.floor(bank / 128) % 128
-    lsb = bank % 128
+    msb, lsb = if bank >= 0
+      math.floor(bank / 128) % 128, bank % 128
+    else
+      -1, -1
 
     @loading_instrument = true
     @vb.views.bank_msb.value = msb
@@ -60,7 +62,7 @@ class UserInterface
     print "Copying to instrument"
 
     midi = @current_instrument.midi_output_properties
-    midi.bank = @vb.views.bank_msb.value * 128 + @vb.views.bank_lsb.value
+    midi.bank = math.max(0, @vb.views.bank_msb.value) * 128 + @vb.views.bank_lsb.value + 1
     midi.program = @vb.views.program_no.value
 
   make_interface: =>
@@ -83,9 +85,27 @@ class UserInterface
     midi_pickers = @vb\row {
       spacing: 20
 
-      @byte_picker "Bank MSB", "bank_msb", refresh
-      @byte_picker "Bank LSB", "bank_lsb", refresh
-      @byte_picker "Program", "program_no", refresh
+      @byte_picker {
+        title: "Bank MSB"
+        id: "bank_msb"
+        notifier: refresh
+        min: -1
+        max: 127
+      }
+
+      @byte_picker {
+        title: "Bank LSB"
+        id: "bank_lsb"
+        notifier: refresh
+        min: -1
+        max: 127
+      }
+
+      @byte_picker {
+        title: "Program"
+        id: "program_no"
+        notifier: refresh
+      }
     }
 
     ins_loader = @vb\horizontal_aligner {
@@ -107,14 +127,16 @@ class UserInterface
       -- ins_loader
     }
 
-  byte_picker: (title, id, notifier) =>
+  byte_picker: (opts) =>
+    {:title, :id, :notifier} = opts
+    max = opts.max or 128
+    min = opts.min or 0
+
     picker = @vb\valuebox {
-      :id, :notifier
-      min: 0
-      max: 128
+      :id, :notifier, :min, :max
 
       tostring: (num) ->
-        if num == 0
+        if num == min
           "Off"
         else
           tostring num
@@ -134,14 +156,14 @@ class UserInterface
         text: "Up"
         width: "100%"
         notifier: ->
-          picker.value = math.min 128, math.max 0, picker.value + 1
+          picker.value = math.min max, math.max min, picker.value + 1
       }
 
       @vb\button {
         text: "Down"
         width: "100%"
         notifier: ->
-          picker.value = math.min 128, math.max 0, picker.value - 1
+          picker.value = math.min max, math.max min, picker.value - 1
       }
     }
 
