@@ -116,4 +116,4 @@ class InsParser
 
 parser = InsParser!
 raw = parser\parse assert ..., "missing fname"
-print assert (parser\compile_to_lua raw), "failed to compile"
+print (assert parser\compile_to_lua(raw), "failed to compile")
