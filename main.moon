@@ -1,17 +1,31 @@
 
--- TODO: bank msb/lsb should be 0 based
-
 class UserInterface
   title: "MIDI Thing"
   current_instrument: nil
   loading_instrument: false
 
+  modules: {
+    "ins.Korg-NX5R"
+    "ins.SC-8850"
+  }
+
   new: =>
     @root = @make_interface!
     @read_instruments!
+    @load_modules!
 
   for_dialog: =>
     @title, @root
+
+  load_modules: =>
+    @raw_modules = {}
+    names = {}
+    for m in *@modules
+      for name, mod in pairs require m
+        table.insert names, name
+        table.insert @raw_modules, mod
+
+    @vb.views.module_picker.items = {"", unpack names}
 
   -- read instruments from renoise, update dropdown
   -- TODO: this should be called everytime instruments are changed in renoise
@@ -108,6 +122,7 @@ class UserInterface
       }
     }
 
+    -- TODO: probably not going to do this
     ins_loader = @vb\horizontal_aligner {
       mode: "center"
       @vb\button {
@@ -118,13 +133,26 @@ class UserInterface
       }
     }
 
+    module_picker = @vb\column {
+      width: "100%"
+
+      @vb\text text: "MIDI Module"
+      @vb\popup {
+        width: "100%"
+        id: "module_picker"
+        items: {}
+        notifier: (idx) ->
+          print "chose module...", idx
+      }
+    }
+
     @vb\column {
       margin: 15
       spacing: 15
 
       instrument_picker
       midi_pickers
-      -- ins_loader
+      module_picker
     }
 
   byte_picker: (opts) =>
