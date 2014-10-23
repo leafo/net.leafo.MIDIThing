@@ -1,0 +1,4 @@
+.gitignore
+
+: foreach *.ins |> moon ../ins_parser.moon %f > %B.lua |> %B.lua
+
