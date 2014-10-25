@@ -79,6 +79,34 @@ class UserInterface
     midi.bank = math.max(0, @vb.views.bank_msb.value) * 128 + @vb.views.bank_lsb.value + 1
     midi.program = @vb.views.program_no.value
 
+  choose_module: (idx) =>
+    if idx == 1
+      @current_module = nil
+
+    @current_module = @raw_modules[idx - 1]
+
+    names = [i.name for _, i in pairs @current_module]
+    table.sort names
+
+    if @module_sub_pickers
+      @vb.views.module_picker_outer\remove_child @module_sub_pickers
+
+    @module_sub_pickers = @vb\column {
+      width: "100%"
+
+      @vb\popup {
+        width: "100%"
+        items: names
+      }
+
+      @vb\popup {
+        width: "100%"
+        items: {"Hello", "piss"}
+      }
+    }
+
+    @vb.views.module_picker_outer\add_child @module_sub_pickers
+
   make_interface: =>
     @vb = renoise.ViewBuilder!
     instrument_picker = @vb\column {
@@ -135,6 +163,7 @@ class UserInterface
 
     module_picker = @vb\column {
       width: "100%"
+      id: "module_picker_outer"
 
       @vb\text text: "MIDI Module"
       @vb\popup {
@@ -142,8 +171,9 @@ class UserInterface
         id: "module_picker"
         items: {}
         notifier: (idx) ->
-          print "chose module...", idx
+          @choose_module idx
       }
+
     }
 
     @vb\column {
