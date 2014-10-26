@@ -97,14 +97,17 @@ class UserInterface
     if @module_sub_pickers
       @vb.views.module_picker_outer\remove_child @module_sub_pickers
 
+
+    pick_program = (i) ->
+      program = program_tuples[i][1]
+      bank = current_bank.bank
+      @set_bank_program bank, program
+      @copy_to_instrument!
+
     program_picker = @vb\popup {
       width: "100%"
       items: {}
-      notifier: (i) ->
-        program = program_tuples[i][1]
-        bank = current_bank.bank
-        @set_bank_program bank, program
-        @copy_to_instrument!
+      notifier: pick_program
     }
 
     @module_sub_pickers = @vb\column {
@@ -118,6 +121,11 @@ class UserInterface
           program_tuples = [{k,v} for k,v in pairs current_bank.instruments]
           table.sort program_tuples, (a,b) -> a[1] < b[1]
           program_picker.items = [t[2] for t in *program_tuples]
+
+          if program_picker.value == 1
+            pick_program 1
+          else
+            program_picker.value = 1
       }
 
       program_picker
