@@ -48,6 +48,18 @@ class UserInterface
 
     @copy_from_instrument!
 
+  set_bank_program: (bank, program) =>
+    msb, lsb = if bank >= 0
+      math.floor(bank / 128) % 128, bank % 128
+    else
+      -1, -1
+
+    @loading_instrument = true
+    @vb.views.bank_msb.value = msb
+    @vb.views.bank_lsb.value = lsb
+    @vb.views.program_no.value = program + 1 -- uses 1 based selector
+    @loading_instrument = false
+
   -- set byte pickers from current instrument
   -- TODO: this should be called everytime bank/program are changed in renoise
   copy_from_instrument: =>
@@ -58,16 +70,7 @@ class UserInterface
     midi = @current_instrument.midi_output_properties
     bank = midi.bank - 1
 
-    msb, lsb = if bank >= 0
-      math.floor(bank / 128) % 128, bank % 128
-    else
-      -1, -1
-
-    @loading_instrument = true
-    @vb.views.bank_msb.value = msb
-    @vb.views.bank_lsb.value = lsb
-    @vb.views.program_no.value = midi.program
-    @loading_instrument = false
+    @set_bank_program bank, midi.program - 1
 
   copy_to_instrument: =>
     return if @loading_instrument
@@ -85,24 +88,39 @@ class UserInterface
 
     @current_module = @raw_modules[idx - 1]
 
-    names = [i.name for _, i in pairs @current_module]
-    table.sort names
+    bank_tuples = [{i.name, i} for _, i in pairs @current_module]
+    table.sort bank_tuples, (a,b) -> a[1] < b[1]
+
+    local current_bank
+    local program_tuples
 
     if @module_sub_pickers
       @vb.views.module_picker_outer\remove_child @module_sub_pickers
+
+    program_picker = @vb\popup {
+      width: "100%"
+      items: {}
+      notifier: (i) ->
+        program = program_tuples[i][1]
+        bank = current_bank.bank
+        @set_bank_program bank, program
+        @copy_to_instrument!
+    }
 
     @module_sub_pickers = @vb\column {
       width: "100%"
 
       @vb\popup {
         width: "100%"
-        items: names
+        items: [t[1] for t in *bank_tuples]
+        notifier: (i) ->
+          current_bank = bank_tuples[i][2]
+          program_tuples = [{k,v} for k,v in pairs current_bank.instruments]
+          table.sort program_tuples, (a,b) -> a[1] < b[1]
+          program_picker.items = [t[2] for t in *program_tuples]
       }
 
-      @vb\popup {
-        width: "100%"
-        items: {"Hello", "piss"}
-      }
+      program_picker
     }
 
     @vb.views.module_picker_outer\add_child @module_sub_pickers
